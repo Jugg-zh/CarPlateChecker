@@ -48,7 +48,7 @@ public class RecordActivity extends AppCompatActivity {
         CarplateMapper carPlateMapper = (CarplateMapper) intent.getSerializableExtra("CAR_PLATE_MAPPER");
 
         //initialize buttons
-        ImageButton submitButton = findViewById(R.id.recordbnt);
+        Button submitButton = findViewById(R.id.button2);
         TextView plateTextField = findViewById(R.id.editPlateTextView), slotTextField = findViewById(R.id.slotNumberTextView);
 
         TextView promptTextFiled = findViewById(R.id.promptInformation);

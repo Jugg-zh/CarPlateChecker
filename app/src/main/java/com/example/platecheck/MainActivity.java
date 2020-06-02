@@ -52,7 +52,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     public static final String FILE_NAME = "temp.jpg";
     private static final int MAX_DIMENSION = 1200;
@@ -65,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
     //--------new fileds;
     public static CarplateMapper mCarplateMapper = new CarplateMapper();
 
+    private static Button[] buttons;
+    private static String slotNumber;
 //    private EditText editPlate, slotNum;
 //    private String shift;
 //    private TextView msg; //textview to show whether the car plate is registered or not
@@ -81,7 +83,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //Referencing the buttons to their respective ids
-        ToggleButton camButton = findViewById(R.id.toggleButton1);
+        buttons = new Button[10];
+        setUpButtons(buttons);
+
+        setSlots(6);
+        //the button for confirming the floor number and pole number
+        Button confirmButton = findViewById(R.id.confirmButton);
+        confirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String floorNumber = "2A";
+                String poleNumber = "2";
+                // map to number of slots
+                int numberOfSlots = 3;
+                setSlots(numberOfSlots);
+            }
+        });
+//        buttons[1].setOnClickListener(view -> startGalleryChooser());
 //        okButton = findViewById(R.id.ok);
 //        uploadButton = findViewById(R.id.uploadButton);
 //        previous = findViewById(R.id.previous);
@@ -107,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
         //Setting action on clicking the camera button
-        camButton.setOnClickListener(view -> startGalleryChooser());
+//        camButton.setOnClickListener(view -> System.out.println("fuck"));
 //        camButton.setOnClickListener(view -> {
 //            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 //            builder
@@ -169,16 +187,49 @@ public class MainActivity extends AppCompatActivity {
 //        return slotNumber;
 //    }
 
-    private void writeTofile(){
-        if(Utility.requestPermission(this, 200, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            mCarplateMapper.syncToFile();
+    public void setUpButtons(Button[] buttons) {
+        for (int i = 0; i < 10; i++) {
+            String buttonID = "button" + (i+1);
+            int resID = getResources().getIdentifier(buttonID, "id",
+                    "com.example.platecheck");
+            buttons[i] = (Button) findViewById(resID);
+            buttons[i].setOnClickListener(this);
+            buttons[i].setBackgroundColor(getResources().getColor(R.color.gray));
         }
     }
 
-    private void readFromFile(){
-        if(Utility.requestPermission(this,200,Manifest.permission.READ_EXTERNAL_STORAGE)){
-            mCarplateMapper.syncFromDesktop();
+    public void setSlots(int numberOfSlots) {
+        for (int i = 0; i < buttons.length; i++) {
+            if (i < numberOfSlots) {
+                buttons[i].setVisibility(View.VISIBLE);
+                buttons[i].setClickable(true);
+                buttons[i].setBackgroundColor(getResources().getColor(R.color.gray));
+            }
+            else {
+                buttons[i].setVisibility(View.GONE);
+            }
         }
+    }
+
+    @Override
+    public void onClick(View v) {
+        int position = -1;
+        for (int i = 0; i < buttons.length; i++) {
+            if(v.getId() == buttons[i].getId()) {
+                position = i+1;
+                buttons[i].setBackgroundColor(getResources().getColor(R.color.green));
+                buttons[i].setClickable(false);
+            }
+        }
+        slotNumber = getSlotNumber(position);
+        startGalleryChooser();
+
+    }
+
+    private String getSlotNumber(int position) {
+        String floorNumber = "2A";
+        String poleNumber = "1";
+        return "2A-1-1";
     }
 
     public void startGalleryChooser() {
@@ -262,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
         protected final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
@@ -290,6 +342,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
+                System.out.println(result);
 //                TextView imageDetail = activity.findViewById(R.id.plateNum);
 //                imageDetail.setText("Press camera button to detect plate or press download button to save the data.");
 //
@@ -335,7 +388,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void writeTofile(){
+        if(Utility.requestPermission(this, 200, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+            mCarplateMapper.syncToFile();
+        }
+    }
 
+    private void readFromFile(){
+        if(Utility.requestPermission(this,200,Manifest.permission.READ_EXTERNAL_STORAGE)){
+            mCarplateMapper.syncFromDesktop();
+        }
+    }
 
 
 }
