@@ -26,6 +26,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 import android.widget.ViewFlipper;
 
 import com.google.api.client.json.gson.GsonFactory;
@@ -64,14 +65,14 @@ public class MainActivity extends AppCompatActivity {
     //--------new fileds;
     public static CarplateMapper mCarplateMapper = new CarplateMapper();
 
-    private EditText editPlate, slotNum;
-    private String shift;
-    private TextView msg; //textview to show whether the car plate is registered or not
-    private ImageButton camButton, okButton, uploadButton;
-    private Button previous, next; //buttons for changing floorplan images
-    private ViewFlipper flipper;
-    private TextView plateNum;
-    private ImageView mImage;
+//    private EditText editPlate, slotNum;
+//    private String shift;
+//    private TextView msg; //textview to show whether the car plate is registered or not
+////    private ImageButton camButton, okButton, uploadButton;
+////    private Button previous, next; //buttons for changing floorplan images
+//    private ViewFlipper flipper;
+//    private TextView plateNum;
+//    private ImageView mImage;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -80,16 +81,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //Referencing the buttons to their respective ids
-        camButton = findViewById(R.id.startCameraButton);
-        okButton = findViewById(R.id.ok);
-        uploadButton = findViewById(R.id.uploadButton);
+        ToggleButton camButton = findViewById(R.id.toggleButton1);
+//        okButton = findViewById(R.id.ok);
+//        uploadButton = findViewById(R.id.uploadButton);
 //        previous = findViewById(R.id.previous);
 //        next = findViewById((R.id.next));
 
         //Referencing the declared variables to their respective UI components
-        editPlate = findViewById(R.id.editPlate);
-        slotNum = findViewById(R.id.slotNum);
-        msg = findViewById(R.id.unregisteredMsg);
+//        editPlate = findViewById(R.id.editPlate);
+//        slotNum = findViewById(R.id.slotNum);
+//        msg = findViewById(R.id.unregisteredMsg);
 //        flipper = findViewById(R.id.flipper);
 
         //creating array of floorplan images and fitting each image into the ViewFlipper
@@ -106,49 +107,50 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
         //Setting action on clicking the camera button
-        camButton.setOnClickListener(view -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder
-                    .setMessage(R.string.dialog_select_prompt)
-                    .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
-                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
-            builder.create().show();
-            msg.setText("");
-        });
-
-        //Recording slot on clicking the ok button
-        okButton.setOnClickListener(view -> {
-            Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
-            String[] time = timeStamp.toString().split(" ");
-            String[] hour = time[1].split(":");
-            if (Integer.parseInt(hour[0]) <= 12){
-                shift = "Morning";
-            }else {
-                shift = "Evening";
-            }
-            //Returning value of recordSlot to check (returns a string; "null" if car plate is not associated to a room
-            // otherwise the associated room number)
-            String check = mCarplateMapper.recordSlot(getModifiedTextFromGuard(), timeStamp, shift, getEnteredSlotNum());
-            if (check == null){
-                msg.setText("The plate is not registered!");
-            }else{
-                msg.setTextColor(Color.parseColor("#008000"));
-                msg.setText("The plate is registered with room no." + check);
-            }
-
-            Toast.makeText(getApplicationContext(),"Information added successfully!", Toast.LENGTH_LONG).show();
-            editPlate.setText("");
-            slotNum.setText("");
-        });
-
-        //downloading the recorded car information into a file
-        uploadButton.setOnClickListener(view -> {
-            writeTofile();
-            Toast.makeText(getApplicationContext(),"File downloaded successfully", Toast.LENGTH_LONG).show();
-        });
-
-        // reading the json file and convert the json file into objects
-        readFromFile();
+        camButton.setOnClickListener(view -> startGalleryChooser());
+//        camButton.setOnClickListener(view -> {
+//            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//            builder
+//                    .setMessage(R.string.dialog_select_prompt)
+//                    .setPositiveButton(R.string.dialog_select_gallery, (dialog, which) -> startGalleryChooser())
+//                    .setNegativeButton(R.string.dialog_select_camera, (dialog, which) -> startCamera());
+//            builder.create().show();
+//            msg.setText("");
+//        });
+//
+//        //Recording slot on clicking the ok button
+//        okButton.setOnClickListener(view -> {
+//            Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
+//            String[] time = timeStamp.toString().split(" ");
+//            String[] hour = time[1].split(":");
+//            if (Integer.parseInt(hour[0]) <= 12){
+//                shift = "Morning";
+//            }else {
+//                shift = "Evening";
+//            }
+//            //Returning value of recordSlot to check (returns a string; "null" if car plate is not associated to a room
+//            // otherwise the associated room number)
+//            String check = mCarplateMapper.recordSlot(getModifiedTextFromGuard(), timeStamp, shift, getEnteredSlotNum());
+//            if (check == null){
+//                msg.setText("The plate is not registered!");
+//            }else{
+//                msg.setTextColor(Color.parseColor("#008000"));
+//                msg.setText("The plate is registered with room no." + check);
+//            }
+//
+//            Toast.makeText(getApplicationContext(),"Information added successfully!", Toast.LENGTH_LONG).show();
+//            editPlate.setText("");
+//            slotNum.setText("");
+//        });
+//
+//        //downloading the recorded car information into a file
+//        uploadButton.setOnClickListener(view -> {
+//            writeTofile();
+//            Toast.makeText(getApplicationContext(),"File downloaded successfully", Toast.LENGTH_LONG).show();
+//        });
+//
+//        // reading the json file and convert the json file into objects
+//        readFromFile();
     }
 
 //    public void flipperImages(int image) {
@@ -158,14 +160,14 @@ public class MainActivity extends AppCompatActivity {
 //    }
 
 
-    public String getModifiedTextFromGuard(){
-        String editedPlate = editPlate.getText().toString();
-        return editedPlate;
-    }
-    public String getEnteredSlotNum(){
-        String slotNumber = slotNum.getText().toString();
-        return slotNumber;
-    }
+//    public String getModifiedTextFromGuard(){
+//        String editedPlate = editPlate.getText().toString();
+//        return editedPlate;
+//    }
+//    public String getEnteredSlotNum(){
+//        String slotNumber = slotNum.getText().toString();
+//        return slotNumber;
+//    }
 
     private void writeTofile(){
         if(Utility.requestPermission(this, 200, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
@@ -288,24 +290,24 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
-                TextView imageDetail = activity.findViewById(R.id.plateNum);
-                imageDetail.setText("Press camera button to detect plate or press download button to save the data.");
-
-                TextView textView = activity.findViewById(R.id.textView);
-                textView.setVisibility(View.VISIBLE);
-
-                TextView textView2 = activity.findViewById(R.id.textView2);
-                textView2.setVisibility(View.VISIBLE);
-
-                EditText editPlate = activity.findViewById(R.id.editPlate);
-                editPlate.setVisibility(View.VISIBLE);
-                editPlate.setText(result);
-
-                EditText slotNum = activity.findViewById(R.id.slotNum);
-                slotNum.setVisibility(View.VISIBLE);
-
-                ImageButton ok = activity.findViewById(R.id.ok);
-                ok.setVisibility(View.VISIBLE);
+//                TextView imageDetail = activity.findViewById(R.id.plateNum);
+//                imageDetail.setText("Press camera button to detect plate or press download button to save the data.");
+//
+//                TextView textView = activity.findViewById(R.id.textView);
+//                textView.setVisibility(View.VISIBLE);
+//
+//                TextView textView2 = activity.findViewById(R.id.textView2);
+//                textView2.setVisibility(View.VISIBLE);
+//
+//                EditText editPlate = activity.findViewById(R.id.editPlate);
+//                editPlate.setVisibility(View.VISIBLE);
+//                editPlate.setText(result);
+//
+//                EditText slotNum = activity.findViewById(R.id.slotNum);
+//                slotNum.setVisibility(View.VISIBLE);
+//
+//                ImageButton ok = activity.findViewById(R.id.ok);
+//                ok.setVisibility(View.VISIBLE);
 
 //                ViewFlipper flipper = activity.findViewById(R.id.flipper);
 //                flipper.setVisibility(View.VISIBLE);
@@ -321,8 +323,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void callCloudVision(final Bitmap bitmap) {
-        TextView plateNum = findViewById(R.id.plateNum);
-        plateNum.setText("Loading, Please wait");
+//        TextView plateNum = findViewById(R.id.plateNum);
+//        plateNum.setText("Loading, Please wait");
         // Do the real work in an async task, because we need to use the network anyway
         try {
             AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, Utility.prepareAnnotationRequest(bitmap,this));
