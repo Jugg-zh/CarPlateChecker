@@ -214,9 +214,9 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="227dp"
-        android:layout_marginRight="227dp"
-        android:layout_marginBottom="618dp"
+        android:layout_marginEnd="241dp"
+        android:layout_marginRight="241dp"
+        android:layout_marginBottom="595dp"
         android:dropDownWidth="match_parent"
         android:spinnerMode="dropdown" />
 
@@ -227,14 +227,14 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="85dp"
-        android:layout_marginRight="85dp"
-        android:layout_marginBottom="615dp"
+        android:layout_marginEnd="106dp"
+        android:layout_marginRight="106dp"
+        android:layout_marginBottom="593dp"
         android:dropDownWidth="match_parent"
         android:spinnerMode="dropdown" />
 
 
-<!--    <ViewFlipper-->
+    <!--    <ViewFlipper-->
 <!--        android:id="@+id/flipper"-->
 <!--        android:layout_width="match_parent"-->
 <!--        android:layout_height="200dp"-->

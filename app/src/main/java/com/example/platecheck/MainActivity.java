@@ -52,10 +52,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String CLOUD_VISION_API_KEY = "AIzaSyCv5Y8pgxhrdEcleGNkwbDmk0lanutJ1Ak";
+
     public static final String FILE_NAME = "temp.jpg";
-    private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
-    private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
     private static final int MAX_DIMENSION = 1200;
 
     private static final String TAG = MainActivity.class.getSimpleName();

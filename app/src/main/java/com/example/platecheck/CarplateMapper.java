@@ -66,10 +66,10 @@ public class CarplateMapper{
         }
     }
 
-    protected HashMap<String, PlateInfomation> carPlateNumberToPlateInfomation;
+    protected HashMap<String, PlateInfomation> carPlateNumberToPlateInformation;
 
     public CarplateMapper(){
-        carPlateNumberToPlateInfomation = new HashMap<>();
+        carPlateNumberToPlateInformation = new HashMap<>();
     }
 
     /**
@@ -102,7 +102,7 @@ public class CarplateMapper{
             PlateInfomation[] slots = gson.fromJson(sb.toString(), PlateInfomation[].class);
             //mapping plate number to the object
             for(PlateInfomation p : slots){
-                carPlateNumberToPlateInfomation.put(p.plateNumber, p);
+                carPlateNumberToPlateInformation.put(p.plateNumber, p);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -121,12 +121,12 @@ public class CarplateMapper{
      */
     @RequiresApi(api = Build.VERSION_CODES.N)
     public String recordSlot(String carPlate, Timestamp timestamp, String shift, String slotNumber){
-        PlateInfomation currentPlateInfo = carPlateNumberToPlateInfomation.getOrDefault(carPlate, new PlateInfomation(carPlate, null));
+        PlateInfomation currentPlateInfo = carPlateNumberToPlateInformation.getOrDefault(carPlate, new PlateInfomation(carPlate, null));
         currentPlateInfo.setSlotNumber(slotNumber);
         currentPlateInfo.setTimeStamp(timestamp);
         currentPlateInfo.setShift(shift);
-        if(!carPlateNumberToPlateInfomation.containsKey(carPlate)){
-            carPlateNumberToPlateInfomation.put(carPlate, currentPlateInfo);
+        if(!carPlateNumberToPlateInformation.containsKey(carPlate)){
+            carPlateNumberToPlateInformation.put(carPlate, currentPlateInfo);
         }
 
         return currentPlateInfo.getRoomNumber();
@@ -152,8 +152,8 @@ public class CarplateMapper{
             Gson gson = new Gson();
             FileOutputStream outputStream = new FileOutputStream(f);
             ArrayList<PlateInfomation> plateList = new ArrayList<>();
-            for(String plate : carPlateNumberToPlateInfomation.keySet()){
-                plateList.add(carPlateNumberToPlateInfomation.get(plate));
+            for(String plate : carPlateNumberToPlateInformation.keySet()){
+                plateList.add(carPlateNumberToPlateInformation.get(plate));
             }
             Type listType = new TypeToken<List<PlateInfomation>>() {}.getType();
             String json = gson.toJson(plateList,listType);
