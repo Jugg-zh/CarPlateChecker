@@ -30,8 +30,11 @@ import com.google.api.services.vision.v1.model.Image;
 import com.google.api.services.vision.v1.model.ImageContext;
 import com.google.common.io.BaseEncoding;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -75,17 +78,17 @@ public class Utility {
     /**
      *
      * @param response is the value returned by the gcp ocr services
-     * @return a sring that represent that extracted from the response represents the car palate number
+     * @return a string that represent that extracted from the response represents the car palate number
      */
     public static String convertResponseToString(BatchAnnotateImagesResponse response) {
         StringBuilder message = new StringBuilder();
         List<EntityAnnotation> texts = response.getResponses().get(0).getTextAnnotations();
-        if(texts != null){
+
+        if (texts != null) {
             //there are many different text in the responses, according to Thai plate format, find the most suitable one and return it.
             String[] msgArray = texts.get(0).getDescription().trim().split("\n");
             boolean firstRun = false;
-            for(String temp : msgArray){
-
+            for (String temp : msgArray) {
                 String[] temps = temp.split("\\W");
                 if(temps.length == 2){
                     boolean allDigit = true;
@@ -246,6 +249,23 @@ public class Utility {
         Log.d(TAG, "created Cloud Vision request object, sending request");
 
         return annotateRequest;
+    }
+
+    static String getJsonString(MainActivity activity) {
+
+            String json = null;
+            try {
+                StringBuilder sb = new StringBuilder();
+                InputStream target = activity.getAssets().open("floorAndPoleToNumberOfSlots.json");
+                BufferedReader streamReader = new BufferedReader(new InputStreamReader(target, "UTF-8"));
+                String inputStr;
+                while ((inputStr = streamReader.readLine()) != null)
+                    sb.append(inputStr);
+                json = sb.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return json;
     }
 
     static class PlateDetectionTask extends AsyncTask<Object, Void, String> {

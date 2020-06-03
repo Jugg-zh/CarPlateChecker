@@ -1,7 +1,6 @@
 package com.example.platecheck;
 
 import android.Manifest;
-import android.content.Context;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
@@ -18,17 +17,15 @@ public class RecordManager {
     private String slotNumber;
     private Map<String, Map<String,String>> floorAndPoleToSlotsMapper;
 
-    public RecordManager(Context context) {
+    public RecordManager(String json) {
         mCarplateMapper = new CarplateMapper();
-
-        floorAndPoleToSlotsMapper = new Gson().fromJson(context.getString(R.string.map),
-                new TypeToken<Map<String, Map<String, String>>>() {}.getType());
+        floorAndPoleToSlotsMapper = new Gson().fromJson(json, new TypeToken<Map<String, Map<String, String>>>() {}.getType());
         plateNumber = null;
         slotNumber = null;
     }
 
-    public String getNumberOfSlots (String floorNumber, String poleNumber) {
-        return floorAndPoleToSlotsMapper.get(floorNumber).get(poleNumber);
+    public int getNumberOfSlots (String floorNumber, String poleNumber) {
+        return Integer.parseInt(floorAndPoleToSlotsMapper.get(floorNumber).get(poleNumber));
     }
 
     public String getPlateNumber() {
@@ -43,12 +40,12 @@ public class RecordManager {
         this.plateNumber = plateNumber;
     }
 
-    public void setSlotNumber (String slotNumber) {
-        this.slotNumber = slotNumber;
+    public void setSlotNumber (String floorNumber, String poleNumber, int slot) {
+        this.slotNumber = floorNumber + "-" + poleNumber + "-" + slot;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void recordSlot () {
+    public String recordSlot () {
 
         Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
         String[] time = timeStamp.toString().split(" ");
@@ -59,18 +56,26 @@ public class RecordManager {
         } else {
             shift = "Evening";
         }
-        mCarplateMapper.recordSlot(this.plateNumber, timeStamp, shift, this.slotNumber);
+        return mCarplateMapper.recordSlot(this.plateNumber, timeStamp, shift, this.slotNumber);
     }
 
-    private void writeTofile(MainActivity activity) {
+    public void writeTofile(MainActivity activity) {
         if(Utility.requestPermission(activity, 200, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
             mCarplateMapper.syncToFile();
         }
     }
 
-    private void readFromFile(MainActivity activity) {
+    public void readFromFile(MainActivity activity) {
         if(Utility.requestPermission(activity,200,Manifest.permission.READ_EXTERNAL_STORAGE)){
             mCarplateMapper.syncFromDesktop();
         }
     }
+
+    public void printContent(MainActivity activity) {
+        Map<String, CarplateMapper.PlateInfomation> map = mCarplateMapper.getMap();
+        for (String s : map.keySet()) {
+            System.out.println(map.get(s).toString());
+        }
+    }
+
 }

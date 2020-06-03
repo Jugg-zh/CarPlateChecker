@@ -16,17 +16,10 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.vision.v1.Vision;
-import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -39,35 +32,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int CAMERA_PERMISSIONS_REQUEST = 2;
     public static final int CAMERA_IMAGE_REQUEST = 3;
     public static final int PLATE_NUMBER_REQUEST = 4;
-    //--------new fileds;
-    public static final CarplateMapper mCarplateMapper = new CarplateMapper();
-    private static String plateNumber;
-    private static Button[] buttons;
-    private static String slotNumber;
+    private static final Button[] buttons = new Button[10];
+    private RecordManager recordManager;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //Referencing the buttons to their respective ids
-        buttons = new Button[10];
+        recordManager = new RecordManager(Utility.getJsonString(this));
         setUpButtons(buttons);
-        Map<String, Map<String, String>> map = new HashMap<>();
-        map = new Gson().fromJson(getString(R.string.map), new TypeToken<Map<String, Map<String, String>>>() {
-        }.getType());
-//        System.out.println("--------------------------------------------------------");
-//        System.out.println(map.get("2A").get("1"));
-//        System.out.println("--------------------------------------------------------");
-//        System.out.println("--------------------------------------------------------");
-//        System.out.println(map.get("2B").get("2"));
-//        System.out.println("--------------------------------------------------------");
-//        map.get("2A").put("2","5");
-//        String json = new Gson().toJson(map,new TypeToken<Map<String, Map<String,String>>>(){}.getType());
-//        System.out.println("--------------------------------------------------------");
-//        System.out.println(json);
-//        System.out.println("--------------------------------------------------------");
         setSlots(6);
         //the button for confirming the floor number and pole number
         Button confirmButton = findViewById(R.id.confirmButton);
@@ -75,16 +49,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View v) {
                 String floorNumber = "2A";
-                String poleNumber = "2";
+                String poleNumber = "1";
                 // map to number of slots
-                int numberOfSlots = 5;
-//                int numberOfSlots = Integer.parseInt(map.get(floorNumber).get(poleNumber));
-                setSlots(numberOfSlots);
+                setSlots(recordManager.getNumberOfSlots(floorNumber,poleNumber));
             }
         });
     }
-
-
 
     public void setUpButtons(Button[] buttons) {
         for (int i = 0; i < 10; i++) {
@@ -111,20 +81,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void setPlateNumber(String plate) {
-        plateNumber = plate;
+        recordManager.setPlateNumber(plate);
     }
 
     @Override
     public void onClick(View v) {
-        int position = -1;
         for (int i = 0; i < buttons.length; i++) {
-            if(v.getId() == buttons[i].getId()) {
-                position = i+1;
+            if (v.getId() == buttons[i].getId()) {
                 buttons[i].setBackgroundColor(getResources().getColor(R.color.green));
                 buttons[i].setClickable(false);
+                recordManager.setSlotNumber("2A", "1", i+1);
             }
         }
-        slotNumber = getSlotNumber(position);
         //can switch to use camera
         startGalleryChooser();
 
@@ -132,15 +100,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void switchToRecordActivity() {
         Intent intent = new Intent(MainActivity.this, RecordActivity.class);
-        intent.putExtra("CAR_PLATE", plateNumber);
-        intent.putExtra("SLOT_NUMBER", slotNumber);
+        intent.putExtra("CAR_PLATE",  recordManager.getPlateNumber());
+        intent.putExtra("SLOT_NUMBER", recordManager.getSlotNumber());
         startActivityForResult(intent,PLATE_NUMBER_REQUEST);
-    }
-
-    private String getSlotNumber(int position) {
-        String floorNumber = "2A";
-        String poleNumber = "1";
-        return "2A-1-1";
     }
 
     public void startGalleryChooser() {
@@ -185,24 +147,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             uploadImage(photoUri);
         }
         else if (requestCode == PLATE_NUMBER_REQUEST && resultCode == RESULT_OK) {
-            plateNumber = data.getStringExtra("PLATE_NUMBER");
-            System.out.println(plateNumber);
-            Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
-            String[] time = timeStamp.toString().split(" ");
-            String[] hour = time[1].split(":");
-            String shift = null;
-            if (Integer.parseInt(hour[0]) <= 12) {
-                shift = "Morning";
-            } else {
-                shift = "Evening";
-            }
-            mCarplateMapper.recordSlot(plateNumber, timeStamp,
-                    shift, slotNumber);
-
-            Map<String, CarplateMapper.PlateInfomation> map = mCarplateMapper.getMap();
-            for (String s : map.keySet()) {
-                System.out.println(map.get(s).toString());
-            }
+            recordManager.setPlateNumber(data.getStringExtra("PLATE_NUMBER"));
+            String roomNumber = recordManager.recordSlot();
+            Toast.makeText(getApplicationContext(), Optional.ofNullable(roomNumber).orElse("N/A"), Toast.LENGTH_LONG).show();
+            recordManager.printContent(this);
         }
 
     }
@@ -255,15 +203,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-//    private void writeTofile(){
-//        if(Utility.requestPermission(this, 200, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-//            mCarplateMapper.syncToFile();
-//        }
-//    }
-//
-//    private void readFromFile(){
-//        if(Utility.requestPermission(this,200,Manifest.permission.READ_EXTERNAL_STORAGE)){
-//            mCarplateMapper.syncFromDesktop();
-//        }
-//    }
 }
