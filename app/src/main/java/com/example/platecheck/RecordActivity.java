@@ -20,8 +20,8 @@ import java.sql.Timestamp;
 import java.util.Optional;
 
 public class RecordActivity extends AppCompatActivity {
-    private boolean finished = false;
 
+    private TextView plateTextField;
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,32 +45,32 @@ public class RecordActivity extends AppCompatActivity {
     public void recordSlot(Intent intent) {
         String carPlate = intent.getStringExtra("CAR_PLATE");
         String slotNumber = intent.getStringExtra("SLOT_NUMBER");
-        CarplateMapper carPlateMapper = (CarplateMapper) intent.getSerializableExtra("CAR_PLATE_MAPPER");
+
 
         //initialize buttons
         Button submitButton = findViewById(R.id.button2);
-        TextView plateTextField = findViewById(R.id.editPlateTextView), slotTextField = findViewById(R.id.slotNumberTextView);
+        plateTextField = findViewById(R.id.editPlateTextView);
 
-        TextView promptTextFiled = findViewById(R.id.promptInformation);
+        TextView promptTextFiled = findViewById(R.id.promptInformation),slotTextField = findViewById(R.id.slotNumberTextView);
 
         plateTextField.setText(carPlate);
         slotTextField.setText(slotNumber);
         //Recording slot on clicking the ok button
         submitButton.setOnClickListener(view -> {
-            Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
-            String[] time = timeStamp.toString().split(" ");
-            String[] hour = time[1].split(":");
-            String shift = null;
-            if (Integer.parseInt(hour[0]) <= 12) {
-                shift = "Morning";
-            } else {
-                shift = "Evening";
-            }
+//            Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
+//            String[] time = timeStamp.toString().split(" ");
+//            String[] hour = time[1].split(":");
+//            String shift = null;
+//            if (Integer.parseInt(hour[0]) <= 12) {
+//                shift = "Morning";
+//            } else {
+//                shift = "Evening";
+//            }
             //Returning value of recordSlot to check (returns a string; "null" if car plate is not associated to a room
             // otherwise the associated room number)
-            String roomNumber = carPlateMapper.recordSlot(plateTextField.getText().toString(), timeStamp, shift, slotNumber);
+//            String roomNumber = carPlateMapper.recordSlot(plateTextField.getText().toString(), timeStamp, shift, slotNumber);
 
-            promptTextFiled.setText(Optional.ofNullable(roomNumber).orElse("Not Registered"));
+            promptTextFiled.setText(Optional.ofNullable("415").orElse("Not Registered"));
             //wait to check if it is necessary
 //            if (check == null) {
 //                msg.setText("The plate is not registered!");
@@ -83,16 +83,29 @@ public class RecordActivity extends AppCompatActivity {
 //            editPlate.setText("");
 //            slotNum.setText("");
         });
-        finished = true;
     }
     @Override
     public void onBackPressed() {
 //        Intent intent = new Intent();
 //        intent.putExtra("message_return", "This data is returned when user click back menu in target activity.");
 //        setResult(RESULT_OK, intent);
-        if(finished){
-            finish();
-        }
+
+        Intent intent = new Intent();
+//        Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
+//        String[] time = timeStamp.toString().split(" ");
+//        String[] hour = time[1].split(":");
+//        String shift = null;
+//        if (Integer.parseInt(hour[0]) <= 12) {
+//            shift = "Morning";
+//        } else {
+//            shift = "Evening";
+//        }
+//        intent.putExtra("TIME_STAMP",timeStamp);
+//        intent.putExtra("SHIFT", shift);
+        intent.putExtra("PLATE_NUMBER", plateTextField.getText().toString());
+        setResult(RESULT_OK, intent);
+        finish();
+
     }
 //
 //    public String getModifiedTextFromGuard(){

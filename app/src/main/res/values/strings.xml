@@ -5,4 +5,5 @@
     <string name="dialog_select_camera">Camera</string>
     <string name="dialog_select_gallery">Gallery</string>
     <string name="loading_message">Uploading image. Please wait.</string>
+    <string name="map">{"2A":{"1":"3","2":"5"},"2B":{"2":"5"}}</string>
 </resources>

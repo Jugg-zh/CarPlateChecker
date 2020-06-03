@@ -2,14 +2,11 @@ package com.example.platecheck;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
-
 import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -18,39 +15,18 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
-import android.widget.ViewFlipper;
-
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.services.vision.v1.Vision;
-import com.google.api.services.vision.v1.VisionRequest;
-import com.google.api.services.vision.v1.VisionRequestInitializer;
-import com.google.api.services.vision.v1.model.AnnotateImageRequest;
-import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
 import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
-import com.google.api.services.vision.v1.model.CropHintsParams;
-import com.google.api.services.vision.v1.model.Feature;
-import com.google.api.services.vision.v1.model.Image;
-import com.google.api.services.vision.v1.model.ImageContext;
-import java.io.ByteArrayOutputStream;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -62,11 +38,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int GALLERY_IMAGE_REQUEST = 1;
     public static final int CAMERA_PERMISSIONS_REQUEST = 2;
     public static final int CAMERA_IMAGE_REQUEST = 3;
+    public static final int PLATE_NUMBER_REQUEST = 4;
     //--------new fileds;
-    public static CarplateMapper mCarplateMapper = new CarplateMapper();
-
+    public static final CarplateMapper mCarplateMapper = new CarplateMapper();
+    private static boolean finishedDetectionTask;
+    private static String plateNumber;
     private static Button[] buttons;
     private static String slotNumber;
+
 //    private EditText editPlate, slotNum;
 //    private String shift;
 //    private TextView msg; //textview to show whether the car plate is registered or not
@@ -85,7 +64,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Referencing the buttons to their respective ids
         buttons = new Button[10];
         setUpButtons(buttons);
-
+        Map<String, Map<String,String>> map = new HashMap<>();
+        map = new Gson().fromJson(getString(R.string.map), new TypeToken<Map<String, Map<String,String>>>(){}.getType());
+//        System.out.println("--------------------------------------------------------");
+//        System.out.println(map.get("2A").get("1"));
+//        System.out.println("--------------------------------------------------------");
+//        System.out.println("--------------------------------------------------------");
+//        System.out.println(map.get("2B").get("2"));
+//        System.out.println("--------------------------------------------------------");
+//        map.get("2A").put("2","5");
+//        String json = new Gson().toJson(map,new TypeToken<Map<String, Map<String,String>>>(){}.getType());
+//        System.out.println("--------------------------------------------------------");
+//        System.out.println(json);
+//        System.out.println("--------------------------------------------------------");
         setSlots(6);
         //the button for confirming the floor number and pole number
         Button confirmButton = findViewById(R.id.confirmButton);
@@ -95,7 +86,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String floorNumber = "2A";
                 String poleNumber = "2";
                 // map to number of slots
-                int numberOfSlots = 3;
+                int numberOfSlots = 5;
+//                int numberOfSlots = Integer.parseInt(map.get(floorNumber).get(poleNumber));
                 setSlots(numberOfSlots);
             }
         });
@@ -211,6 +203,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public void setPlateNumber(String plate) {
+        plateNumber = plate;
+    }
+
     @Override
     public void onClick(View v) {
         int position = -1;
@@ -223,7 +219,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         slotNumber = getSlotNumber(position);
         startGalleryChooser();
+        System.out.println("second");
+//        Intent intent = new Intent(MainActivity.this, RecordActivity.class);
+//        intent.putExtra("CAR_PLATE", plateNumber);
+//        intent.putExtra("SLOT_NUMBER", slotNumber);
+//        startActivityForResult(intent,PLATE_NUMBER_REQUEST);
+//        startActivity(intent);
 
+    }
+
+    public void switchToRecordActivity() {
+        Intent intent = new Intent(MainActivity.this, RecordActivity.class);
+        intent.putExtra("CAR_PLATE", plateNumber);
+        intent.putExtra("SLOT_NUMBER", slotNumber);
+        startActivityForResult(intent,PLATE_NUMBER_REQUEST);
     }
 
     private String getSlotNumber(int position) {
@@ -261,16 +270,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return new File(dir, FILE_NAME);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             uploadImage(data.getData());
-        } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
+        }
+        else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
         }
+        else if (requestCode == PLATE_NUMBER_REQUEST && resultCode == RESULT_OK) {
+            plateNumber = data.getStringExtra("PLATE_NUMBER");
+            System.out.println(plateNumber);
+            Timestamp timeStamp = new Timestamp(System.currentTimeMillis());
+            String[] time = timeStamp.toString().split(" ");
+            String[] hour = time[1].split(":");
+            String shift = null;
+            if (Integer.parseInt(hour[0]) <= 12) {
+                shift = "Morning";
+            } else {
+                shift = "Evening";
+            }
+            mCarplateMapper.recordSlot(plateNumber, timeStamp,
+                    shift, slotNumber);
+
+            Map<String, CarplateMapper.PlateInfomation> map = mCarplateMapper.getMap();
+            for (String s : map.keySet()) {
+                System.out.println(map.get(s).toString());
+            }
+        }
+
     }
 
     @Override
@@ -314,12 +346,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
+    private static class PlateDetectionTask extends AsyncTask<Object, Void, String> {
         protected final WeakReference<MainActivity> mActivityWeakReference;
         private Vision.Images.Annotate mRequest;
 
-        LableDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
+        PlateDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
             mActivityWeakReference = new WeakReference<>(activity);
+            mRequest = annotate;
+        }
+
+        public void setRequest(Vision.Images.Annotate annotate) {
             mRequest = annotate;
         }
 
@@ -342,7 +378,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected void onPostExecute(String result) {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
-                System.out.println(result);
+//            if (activity != null) {
+                activity.setPlateNumber(result);
+                activity.switchToRecordActivity();
+
+//                activity.setTaskFinished();
+
+//                System.out.println("first");
 //                TextView imageDetail = activity.findViewById(R.id.plateNum);
 //                imageDetail.setText("Press camera button to detect plate or press download button to save the data.");
 //
@@ -380,8 +422,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        plateNum.setText("Loading, Please wait");
         // Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, Utility.prepareAnnotationRequest(bitmap,this));
-            labelDetectionTask.execute();
+            AsyncTask<Object, Void, String> plateDetectionTask =  new PlateDetectionTask(this, Utility.prepareAnnotationRequest(bitmap,this));
+            finishedDetectionTask = false;
+            plateDetectionTask.execute();
+
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " +
                     e.getMessage());

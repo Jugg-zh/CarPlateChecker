@@ -2,6 +2,9 @@ package com.example.platecheck;
 
 import android.os.Build;
 import android.os.Environment;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -18,9 +21,9 @@ import com.google.gson.reflect.TypeToken;
 import androidx.annotation.RequiresApi;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class CarplateMapper{
-
 
     class PlateInfomation{
         protected String plateNumber;
@@ -66,11 +69,16 @@ public class CarplateMapper{
         }
     }
 
-    protected HashMap<String, PlateInfomation> carPlateNumberToPlateInformation;
+    protected Map<String, PlateInfomation> carPlateNumberToPlateInformation;
 
     public CarplateMapper(){
         carPlateNumberToPlateInformation = new HashMap<>();
     }
+
+    public CarplateMapper(Map<String, PlateInfomation> map){
+        carPlateNumberToPlateInformation = map;
+    }
+
 
     /**
      * Create a folder and file if it does not exist, if it exists, then read the contents
@@ -165,5 +173,9 @@ public class CarplateMapper{
             e.printStackTrace();
         }
 
+    }
+
+    public Map<String,PlateInfomation> getMap() {
+        return this.carPlateNumberToPlateInformation;
     }
 }
