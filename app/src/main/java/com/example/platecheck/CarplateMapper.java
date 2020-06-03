@@ -166,6 +166,7 @@ public class CarplateMapper{
             Type listType = new TypeToken<List<PlateInfomation>>() {}.getType();
             String json = gson.toJson(plateList,listType);
             outputStream.write(json.getBytes());
+            System.out.println(json);
             outputStream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();

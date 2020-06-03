@@ -15,13 +15,19 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener {
 
     public static final String FILE_NAME = "temp.jpg";
     private static final int MAX_DIMENSION = 1200;
@@ -34,26 +40,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int PLATE_NUMBER_REQUEST = 4;
     private static final Button[] buttons = new Button[10];
     private RecordManager recordManager;
+    private Spinner floorNum, poleNum;
+    private TextView promptText;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         recordManager = new RecordManager(Utility.getJsonString(this));
+        recordManager.readFromFile(this);
+
         setUpButtons(buttons);
-        setSlots(6);
-        //the button for confirming the floor number and pole number
-        Button confirmButton = findViewById(R.id.confirmButton);
-        confirmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
+        setSlots(-1, false);
+        floorNum = findViewById(R.id.floorNum);
+        poleNum = findViewById(R.id.poleNum);
+        promptText = findViewById(R.id.promptText);
+        ArrayAdapter<String> floorAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, recordManager.getFloorNumberList());
+        floorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        floorNum.setAdapter(floorAdapter);
+        floorNum.setOnItemSelectedListener(this);
+
+        final Button submitButton = findViewById(R.id.submitButton);
+        submitButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                String floorNumber = "2A";
-                String poleNumber = "1";
-                // map to number of slots
-                setSlots(recordManager.getNumberOfSlots(floorNumber,poleNumber));
+                recordManager.writeTofile(MainActivity.this);
             }
         });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String floorNumberString = this.floorNum.getSelectedItem().toString();
+        List<String> poleList = recordManager.getPoleNumberList(floorNumberString);
+        ArrayAdapter<String> dataAdapter2 = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_item, poleList);
+        dataAdapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dataAdapter2.notifyDataSetChanged();
+        poleNum.setAdapter(dataAdapter2);
+        poleNum.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                setSlots(0, true);
+                setPromptText();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        this.floorNum.setPrompt("Choose Floor");
     }
 
     public void setUpButtons(Button[] buttons) {
@@ -67,7 +111,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void setSlots(int numberOfSlots) {
+    public void setSlots(int numberOfSlots, boolean selected) {
+        if (selected) {
+            String floorNumber = this.floorNum.getSelectedItem().toString();
+            String poleNumber = this.poleNum.getSelectedItem().toString();
+            numberOfSlots = recordManager.getNumberOfSlots(floorNumber,poleNumber);
+        }
+
         for (int i = 0; i < buttons.length; i++) {
             if (i < numberOfSlots) {
                 buttons[i].setVisibility(View.VISIBLE);
@@ -82,6 +132,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void setPlateNumber(String plate) {
         recordManager.setPlateNumber(plate);
+    }
+
+    public void setPromptText() {
+        String floorNumber = this.floorNum.getSelectedItem().toString();
+        String poleNumber = this.poleNum.getSelectedItem().toString();
+        String prompt = "\t\t\tFloor " + floorNumber + "\t\tPole " + poleNumber;
+        promptText.setText(prompt);
+        promptText.setBackgroundColor(getResources().getColor(R.color.colorAccent));
     }
 
     @Override
