@@ -7,11 +7,9 @@ import android.content.pm.Signature;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -29,7 +27,6 @@ import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
 import com.google.api.services.vision.v1.model.ImageContext;
 import com.google.common.io.BaseEncoding;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,17 +40,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Utility {
-    private static final String CLOUD_VISION_API_KEY = "";
-    public static final String FILE_NAME = "temp.jpg";
+    private static final String CLOUD_VISION_API_KEY = "AIzaSyCv5Y8pgxhrdEcleGNkwbDmk0lanutJ1Ak";
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
-    private static final int MAX_DIMENSION = 1200;
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int GALLERY_PERMISSIONS_REQUEST = 0;
-    private static final int GALLERY_IMAGE_REQUEST = 1;
-    public static final int CAMERA_PERMISSIONS_REQUEST = 2;
-    public static final int CAMERA_IMAGE_REQUEST = 3;
 
     public static Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
 
@@ -103,7 +94,6 @@ public class Utility {
                     }
                 }
             }
-
             if(!firstRun){
                 for(String temp : msgArray){
                     if(temp.length() == 7){

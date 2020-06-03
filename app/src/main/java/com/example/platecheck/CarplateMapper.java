@@ -2,9 +2,6 @@ package com.example.platecheck;
 
 import android.os.Build;
 import android.os.Environment;
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -74,11 +71,6 @@ public class CarplateMapper{
     public CarplateMapper(){
         carPlateNumberToPlateInformation = new HashMap<>();
     }
-
-    public CarplateMapper(Map<String, PlateInfomation> map){
-        carPlateNumberToPlateInformation = map;
-    }
-
 
     /**
      * Create a folder and file if it does not exist, if it exists, then read the contents
@@ -166,7 +158,6 @@ public class CarplateMapper{
             Type listType = new TypeToken<List<PlateInfomation>>() {}.getType();
             String json = gson.toJson(plateList,listType);
             outputStream.write(json.getBytes());
-            System.out.println(json);
             outputStream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();

@@ -15,7 +15,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -31,7 +30,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public static final String FILE_NAME = "temp.jpg";
     private static final int MAX_DIMENSION = 1200;
-
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int GALLERY_PERMISSIONS_REQUEST = 0;
     private static final int GALLERY_IMAGE_REQUEST = 1;
