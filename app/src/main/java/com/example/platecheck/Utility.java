@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -12,6 +13,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -30,6 +32,7 @@ import com.google.common.io.BaseEncoding;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -243,5 +246,39 @@ public class Utility {
         Log.d(TAG, "created Cloud Vision request object, sending request");
 
         return annotateRequest;
+    }
+
+    static class PlateDetectionTask extends AsyncTask<Object, Void, String> {
+        protected final WeakReference<MainActivity> mActivityWeakReference;
+        private Vision.Images.Annotate mRequest;
+
+        PlateDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
+            mActivityWeakReference = new WeakReference<>(activity);
+            mRequest = annotate;
+        }
+
+        @Override
+        protected String doInBackground(Object... params) {
+            try {
+                Log.d(TAG, "created Cloud Vision request object, sending request");
+                BatchAnnotateImagesResponse response = mRequest.execute();
+                return Utility.convertResponseToString(response);
+
+            } catch (GoogleJsonResponseException e) {
+                Log.d(TAG, "failed to make API request because " + e.getContent());
+            } catch (IOException e) {
+                Log.d(TAG, "failed to make API request because of other IOException " +
+                        e.getMessage());
+            }
+            return "Cloud Vision API request failed. Check logs for details.";
+        }
+
+        protected void onPostExecute(String result) {
+            MainActivity activity = mActivityWeakReference.get();
+            if (activity != null && !activity.isFinishing()) {
+                activity.setPlateNumber(result);
+                activity.switchToRecordActivity();
+            }
+        }
     }
 }

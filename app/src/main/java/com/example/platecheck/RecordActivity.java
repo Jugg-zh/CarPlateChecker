@@ -107,10 +107,5 @@ public class RecordActivity extends AppCompatActivity {
         finish();
 
     }
-//
-//    public String getModifiedTextFromGuard(){
-//        String editedPlate = editPlate.getText().toString();
-//        return editedPlate;
-//    }
 
 }
