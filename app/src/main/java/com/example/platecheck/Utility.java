@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Utility {
-    private static final String CLOUD_VISION_API_KEY = "";
+    private static final String CLOUD_VISION_API_KEY = "AIzaSyCv5Y8pgxhrdEcleGNkwbDmk0lanutJ1Ak";
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
