@@ -44,13 +44,14 @@ public class RecordActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * Disable the return button in case user accidentally clicked it causes the plate not being
+     * recorded
+     */
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent();
-        intent.putExtra("PLATE_NUMBER", plateTextField.getText().toString());
-        setResult(RESULT_OK, intent);
-        finish();
-
+        return;
     }
 
 }

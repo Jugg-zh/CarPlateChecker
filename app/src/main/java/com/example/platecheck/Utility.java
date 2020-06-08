@@ -40,10 +40,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Utility {
-    private static final String CLOUD_VISION_API_KEY = "";
+    private static final String CLOUD_VISION_API_KEY = "AIzaSyCv5Y8pgxhrdEcleGNkwbDmk0lanutJ1Ak";
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
-
     private static final String TAG = MainActivity.class.getSimpleName();
 
     public static Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
@@ -241,6 +240,12 @@ public class Utility {
         return annotateRequest;
     }
 
+    /**
+     *
+     * @param activity
+     * @return A string representation (in json format, so it can be converted to a map)
+     * of the Map , (FloorNumber, PoleNumber) -> numberOfSlots
+     */
     static String getJsonString(MainActivity activity) {
 
             String json = null;
@@ -258,37 +263,4 @@ public class Utility {
             return json;
     }
 
-    static class PlateDetectionTask extends AsyncTask<Object, Void, String> {
-        protected final WeakReference<MainActivity> mActivityWeakReference;
-        private Vision.Images.Annotate mRequest;
-
-        PlateDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
-            mActivityWeakReference = new WeakReference<>(activity);
-            mRequest = annotate;
-        }
-
-        @Override
-        protected String doInBackground(Object... params) {
-            try {
-                Log.d(TAG, "created Cloud Vision request object, sending request");
-                BatchAnnotateImagesResponse response = mRequest.execute();
-                return Utility.convertResponseToString(response);
-
-            } catch (GoogleJsonResponseException e) {
-                Log.d(TAG, "failed to make API request because " + e.getContent());
-            } catch (IOException e) {
-                Log.d(TAG, "failed to make API request because of other IOException " +
-                        e.getMessage());
-            }
-            return "Cloud Vision API request failed. Check logs for details.";
-        }
-
-        protected void onPostExecute(String result) {
-            MainActivity activity = mActivityWeakReference.get();
-            if (activity != null && !activity.isFinishing()) {
-                activity.setPlateNumber(result);
-                activity.switchToRecordActivity();
-            }
-        }
-    }
 }
