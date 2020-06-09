@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,6 +63,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         floorNum.setAdapter(floorAdapter);
         floorNum.setOnItemSelectedListener(this);
 
+        // final ImageButton submitButton = findViewById(R.id.submitButton);
+        // submitButton.setOnClickListener(new View.OnClickListener() {
+        //     public void onClick(View v) {
+        //         recordManager.writeTofile(MainActivity.this);
         final Button submitButton = findViewById(R.id.submitButton);
         // once the submit button is clicked, write the map to the file.
         submitButton.setOnClickListener((View view) -> {
@@ -181,9 +186,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void setPromptText() {
         String floorNumber = this.floorNum.getSelectedItem().toString();
         String poleNumber = this.poleNum.getSelectedItem().toString();
-        String prompt = "\t\t\tFloor " + floorNumber + "\t\tPole " + poleNumber;
+        String prompt = "Floor " + floorNumber + "  Pole " + poleNumber;
         promptText.setText(prompt);
-        promptText.setBackgroundColor(getResources().getColor(R.color.colorAccent));
+        promptText.setBackground(getResources().getDrawable(R.drawable.roundcorner));
     }
 
     /**
@@ -201,8 +206,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         poleNum.getSelectedItem().toString(), i+1);
             }
         }
-        //can switch to use camera
+        //can switch to use camera or choose from gallery
         startGalleryChooser();
+//        startCamera();
+
         Toast.makeText(getApplicationContext(), "Loading....", Toast.LENGTH_LONG).show();
     }
 
