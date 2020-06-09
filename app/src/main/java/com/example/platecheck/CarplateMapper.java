@@ -1,7 +1,6 @@
 package com.example.platecheck;
 
 import android.os.Build;
-import android.os.Environment;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -59,17 +58,21 @@ public class CarplateMapper{
             sb.append("plateNumber : " + plateNumber + " ");
             sb.append("roomNumber : " + roomNumber + " ");
             sb.append("slotNumber : " + slotNumber + " ");
-            sb.append("timeStamp : " + timeStamp + " ");
+            sb.append("timeStamp : " + timeStamp.toString() + " GMT " + " ");
             sb.append("shift : " + shift + " ");
             sb.append("\n");
             return sb.toString();
         }
     }
 
-    protected Map<String, PlateInfomation> carPlateNumberToPlateInformation;
+    private Map<String, PlateInfomation> carPlateNumberToPlateInformation;
+    private MainActivity activity;
+    private final String INPUT_FILE = "table.json";
+    private final String OUTPUT_FILE = "jsonFile.json";
 
-    public CarplateMapper(){
+    public CarplateMapper(MainActivity activity){
         carPlateNumberToPlateInformation = new HashMap<>();
+        this.activity = activity;
     }
 
     /**
@@ -77,20 +80,14 @@ public class CarplateMapper{
      * and store them in the HashMap
      */
     public void syncFromDesktop(){
-        //setting up the path
-        String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String fileName = "table.json";
-        File dir = new File(baseDir + "/Carplate/");
-        dir.mkdir();
-        File dir2 = new File(dir.getAbsolutePath() + "/FromDesktop/");
-        dir2.mkdir();
-        File f = new File(dir2.getAbsolutePath() + "/"+ fileName);
+        //clear the previous map
+        carPlateNumberToPlateInformation = new HashMap<>();
+        FileInputStream fileInputStream;
         //convert json file back to objects
         try {
+            fileInputStream = activity.openFileInput(INPUT_FILE);
             Gson gson = new Gson();
-            FileInputStream fileInputStream = new FileInputStream(f);
-            DataInputStream dataInputStream = new DataInputStream(fileInputStream);
-            BufferedReader br = new BufferedReader(new InputStreamReader(dataInputStream));
+            BufferedReader br = new BufferedReader(new InputStreamReader(fileInputStream));
 
             StringBuilder sb = new StringBuilder();
             String strLine = null;
@@ -111,6 +108,25 @@ public class CarplateMapper{
         }
     }
 
+    /***
+     *
+     * @param json write the json string queried from the server to a local file, so it can be read later
+     */
+    public void updateTable(String json){
+        //save the json string to file
+        try {
+            FileOutputStream outputStream = activity.openFileOutput(INPUT_FILE, activity.MODE_PRIVATE);
+            outputStream.write(json.getBytes());
+            outputStream.flush();
+            outputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     /**
      *
      * @param carPlate is the car plate number that needs to be recorded
@@ -121,53 +137,83 @@ public class CarplateMapper{
      */
     @RequiresApi(api = Build.VERSION_CODES.N)
     public String recordSlot(String carPlate, Timestamp timestamp, String shift, String slotNumber){
-        PlateInfomation currentPlateInfo = carPlateNumberToPlateInformation.getOrDefault(carPlate, new PlateInfomation(carPlate, null));
+        PlateInfomation currentPlateInfo = carPlateNumberToPlateInformation.getOrDefault(carPlate, new PlateInfomation(carPlate, "N/A"));
         currentPlateInfo.setSlotNumber(slotNumber);
         currentPlateInfo.setTimeStamp(timestamp);
         currentPlateInfo.setShift(shift);
-        if(!carPlateNumberToPlateInformation.containsKey(carPlate)){
-            carPlateNumberToPlateInformation.put(carPlate, currentPlateInfo);
-        }
+
+        carPlateNumberToPlateInformation.putIfAbsent(carPlate, currentPlateInfo);
 
         return currentPlateInfo.getRoomNumber();
     }
 
     /**
-     * create the folder and file if it does not exist, otherwise store the object in the json file to the files
+     * create the file if it does not exist, otherwise store the map to the OUTPUT file
      */
-    public void syncToFile() {
-
-        //setting up the file path
-        String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String fileName = "table.json";
-        File dir = new File(baseDir + "/Carplate/");
-        dir.mkdir();
-        File dir2 = new File(dir.getAbsolutePath() + "/ToDesktop/");
-        dir2.mkdir();
-        File f = new File(dir2.getAbsolutePath() + "/"+ fileName);
+    public boolean syncToFile() {
 
         // convert the map into a list which stores all the values in the map,
         //and then convert this list into a json file.
+        File outputFile = new File(activity.getFilesDir(), OUTPUT_FILE);
+        if (!outputFile.exists()) {
+            try {
+                outputFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         try {
+            // the content will be appended to the file if the file exists
+            FileOutputStream outputStream = activity.openFileOutput(OUTPUT_FILE, activity.MODE_APPEND);
             Gson gson = new Gson();
-            FileOutputStream outputStream = new FileOutputStream(f);
             ArrayList<PlateInfomation> plateList = new ArrayList<>();
             for(String plate : carPlateNumberToPlateInformation.keySet()){
-                plateList.add(carPlateNumberToPlateInformation.get(plate));
+                // if the car is not parked in the parking place, skip it
+                if(carPlateNumberToPlateInformation.get(plate).slotNumber != null) {
+                    plateList.add(carPlateNumberToPlateInformation.get(plate));
+                }
             }
             Type listType = new TypeToken<List<PlateInfomation>>() {}.getType();
             String json = gson.toJson(plateList,listType);
+            json = json.substring(1, json.length()-1);
+            json = json + ",";
             outputStream.write(json.getBytes());
+            outputStream.flush();
             outputStream.close();
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @return the content from OUTPUT file
+     */
+    public String uploadFile(){
+        try {
+            FileInputStream fileInputStream = activity.openFileInput(OUTPUT_FILE);
+            DataInputStream dataInputStream = new DataInputStream(fileInputStream);
+            BufferedReader br = new BufferedReader(new InputStreamReader(dataInputStream));
+            StringBuilder sb = new StringBuilder();
+            String strLine = null;
+            while ((strLine = br.readLine()) != null) {
+                sb.append(strLine);
+                sb.append("\n");
+            }
+            fileInputStream.close();
+            br.close();
+            activity.deleteFile(OUTPUT_FILE);
+            return sb.toString();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-    }
-
-    public Map<String,PlateInfomation> getMap() {
-        return this.carPlateNumberToPlateInformation;
+        return null;
     }
 }

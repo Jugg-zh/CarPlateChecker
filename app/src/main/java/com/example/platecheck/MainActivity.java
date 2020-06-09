@@ -42,30 +42,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Spinner floorNum, poleNum;
     private TextView promptText;
 
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        recordManager = new RecordManager(Utility.getJsonString(this));
-        recordManager.readFromFile(this);
+        recordManager = new RecordManager(Utility.getJsonString(this), this);
+        recordManager.readFromFile();
 
         setUpButtons(buttons);
         setSlots(-1, false);
         floorNum = findViewById(R.id.floorNum);
         poleNum = findViewById(R.id.poleNum);
         promptText = findViewById(R.id.promptText);
-        ArrayAdapter<String> floorAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, recordManager.getFloorNumberList());
+        ArrayAdapter<String> floorAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, recordManager.getFloorNumberList());
         floorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         floorNum.setAdapter(floorAdapter);
         floorNum.setOnItemSelectedListener(this);
 
-        final ImageButton submitButton = findViewById(R.id.submitButton);
-        submitButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                recordManager.writeTofile(MainActivity.this);
+        // final ImageButton submitButton = findViewById(R.id.submitButton);
+        // submitButton.setOnClickListener(new View.OnClickListener() {
+        //     public void onClick(View v) {
+        //         recordManager.writeTofile(MainActivity.this);
+        final Button submitButton = findViewById(R.id.submitButton);
+        // once the submit button is clicked, write the map to the file.
+        submitButton.setOnClickListener((View view) -> {
+            boolean successed = false;
+            while (!successed) {
+                successed = recordManager.writeToFile();
             }
+            Toast.makeText(getApplicationContext(), "File Saved!", Toast.LENGTH_LONG).show();
+
+        });
+
+        final Button downloadButton = findViewById(R.id.downloadButton);
+        // if download Button is clicked, download the map from the server
+        downloadButton.setOnClickListener( (View view) -> {
+                HttpGetRequest request = new HttpGetRequest(MainActivity.this);
+                request.execute();
+        });
+        final Button uploadButton = findViewById(R.id.uploadButton);
+        // if upload button is clicked, upload the records to the server.
+        uploadButton.setOnClickListener( (View view) -> {
+                HttpPostRequest request = new HttpPostRequest(MainActivity.this);
+                request.execute();
         });
     }
 
@@ -96,9 +119,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
-        this.floorNum.setPrompt("Choose Floor");
     }
 
+    /**
+     * initializing the buttons.
+     * @param buttons
+     */
     public void setUpButtons(Button[] buttons) {
         for (int i = 0; i < 10; i++) {
             String buttonID = "button" + (i+1);
@@ -110,6 +136,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * Set how many buttons(slots) are visible to the users, the buttons are numbered from 1-10
+     * @param numberOfSlots
+     * @param selected
+     */
     public void setSlots(int numberOfSlots, boolean selected) {
         if (selected) {
             String floorNumber = this.floorNum.getSelectedItem().toString();
@@ -133,6 +164,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         recordManager.setPlateNumber(plate);
     }
 
+
+    /**
+     * update the file which is in Internal storage using the json String
+     * @param json String format queried from the server
+     */
+    public void updateFile(String json) {
+        recordManager.updateFile(json);
+        recordManager.readFromFile();
+        Toast.makeText(getApplicationContext(),
+                "Download Successfully!", Toast.LENGTH_LONG).show();
+    }
+
+    public String uploadFile() {
+        return recordManager.uploadFile();
+    }
+
+    /**
+     * set the text filed
+     */
     public void setPromptText() {
         String floorNumber = this.floorNum.getSelectedItem().toString();
         String poleNumber = this.poleNum.getSelectedItem().toString();
@@ -141,21 +191,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         promptText.setBackground(getResources().getDrawable(R.drawable.roundcorner));
     }
 
+    /**
+     * Check which button(slot) is clicked to generate the slot Number and set the slot number
+     * in RecordManager
+     * @param v
+     */
     @Override
     public void onClick(View v) {
         for (int i = 0; i < buttons.length; i++) {
             if (v.getId() == buttons[i].getId()) {
                 buttons[i].setBackgroundColor(getResources().getColor(R.color.green));
                 buttons[i].setClickable(false);
-                recordManager.setSlotNumber("2A", "1", i+1);
+                recordManager.setSlotNumber(floorNum.getSelectedItem().toString(),
+                        poleNum.getSelectedItem().toString(), i+1);
             }
         }
         //can switch to use camera or choose from gallery
         startGalleryChooser();
 //        startCamera();
 
+        Toast.makeText(getApplicationContext(), "Loading....", Toast.LENGTH_LONG).show();
     }
 
+    /**
+     * switch to another activity once the user clicked any button(slot)
+     */
     public void switchToRecordActivity() {
         Intent intent = new Intent(MainActivity.this, RecordActivity.class);
         intent.putExtra("CAR_PLATE",  recordManager.getPlateNumber());
@@ -164,7 +224,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void startGalleryChooser() {
-        if (Utility.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (Utility.requestPermission(this,
+                GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -180,7 +241,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.CAMERA)) {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
+            Uri photoUri = FileProvider.getUriForFile(this,
+                    getApplicationContext().getPackageName() + ".provider", getCameraFile());
             intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivityForResult(intent, CAMERA_IMAGE_REQUEST);
@@ -201,14 +263,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             uploadImage(data.getData());
         }
         else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
-            Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
+            Uri photoUri = FileProvider.getUriForFile(this,
+                    getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
         }
         else if (requestCode == PLATE_NUMBER_REQUEST && resultCode == RESULT_OK) {
             recordManager.setPlateNumber(data.getStringExtra("PLATE_NUMBER"));
             String roomNumber = recordManager.recordSlot();
             Toast.makeText(getApplicationContext(), Optional.ofNullable(roomNumber).orElse("N/A"), Toast.LENGTH_LONG).show();
-            recordManager.printContent(this);
         }
 
     }
@@ -232,7 +294,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-
+    /**
+     *prepare the image
+     * @param uri the target image url
+     */
     public void uploadImage(Uri uri) {
         if (uri != null) {
             try {
@@ -249,10 +314,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * create a AsyncTask to use the GCP service to extract the plateNumber from the image
+     * @param bitmap the target image
+     */
     private void callCloudVision(final Bitmap bitmap) {
         // Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, String> plateDetectionTask =  new Utility.PlateDetectionTask(this, Utility.prepareAnnotationRequest(bitmap,this));
+            AsyncTask<Object, Void, String> plateDetectionTask =  new PlateDetectionTask(this,
+                    Utility.prepareAnnotationRequest(bitmap,this));
             plateDetectionTask.execute();
 
         } catch (IOException e) {
